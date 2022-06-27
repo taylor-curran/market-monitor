@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+market_watch/comps_list.py
+
+*.csv
+
+.prefect/
+
+data/
