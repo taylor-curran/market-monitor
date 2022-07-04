@@ -58,18 +58,18 @@ def data_output(BEARER_TOKEN, users, fields):
     response = make_api_call(headers, user_string, field_string)
     return response.result().json()
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
-#     # Input data
-#     users = [
-#         'apacheairflow', 
-#         'astronomerio'
-#         ]
-#     fields = 'public_metrics'
+    # Input data
+    users = [
+        'apacheairflow', 
+        'astronomerio'
+        ]
+    fields = 'public_metrics'
 
-#     r = data_output(BEARER_TOKEN='TWITTER_BEARER_TOKEN', users=users, fields=fields)
+    r = data_output(BEARER_TOKEN='TWITTER_BEARER_TOKEN', users=users, fields=fields)
 
-#     print(r.result())
-#     print('KJHS')
+    print(r.result())
+    print('Done!')
 
 
