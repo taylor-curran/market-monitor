@@ -11,8 +11,12 @@ directory_blob = '.prefect/from_blob'
 
 for filename in os.listdir(directory):
     f = os.path.join(directory, filename)
-    print("f", f)
+    print("File: ", f)
+
     with open(f, "rb") as buffered_reader:
-        dict_obj = json.load(buffered_reader)
-        flow_run_result = DataDocument.parse_obj(dict_obj).decode()
-        print(flow_run_result)
+        try:
+            dict_obj = json.load(buffered_reader)
+            flow_run_result = DataDocument.parse_obj(dict_obj).decode()
+            print(flow_run_result)
+        except:
+            print("NOT Cloudpickle")

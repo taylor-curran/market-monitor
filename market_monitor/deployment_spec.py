@@ -1,13 +1,18 @@
 
 from prefect.deployments import DeploymentSpec
 from prefect.flow_runners import SubprocessFlowRunner
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+TWITTER_BEARER_TOKEN=os.getenv("TWITTER_BEARER_TOKEN")
 
 DeploymentSpec(
-    name="my-first-deployment",
-    flow_location="./first_flow.py",
+    name="twitter-user-query-flow",
+    flow_location="./twitter_user_query_flow.py",
     flow_name="Get User Data from Twitter API",
     parameters={
-        'BEARER_TOKEN': 'TWITTER_BEARER_TOKEN',
+        'TWITTER_BEARER_TOKEN': os.environ['TWITTER_BEARER_TOKEN'],
         'users':[
             'apacheairflow', 
             'astronomerio'
@@ -15,6 +20,6 @@ DeploymentSpec(
             'fields': 'public_metrics'
         },
     tags=['Twitter_API'],
-    flow_runner=SubprocessFlowRunner(),
-    flow_storage='e4ccba6c-01d8-42c1-a3d7-4eb0ec9d41e2'
+    flow_runner=SubprocessFlowRunner(env={"TWITTER_BEARER_TOKEN": TWITTER_BEARER_TOKEN}),
+    flow_storage='614add2f-1556-432d-af8d-4821f4cd51bd'
 )

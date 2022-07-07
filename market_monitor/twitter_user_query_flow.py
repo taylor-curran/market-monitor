@@ -7,11 +7,12 @@ import pandas as pd
 from prefect import flow, task
 
 @task(name="make-auth-header")
-def make_authentication_header(BEARER_TOKEN):
-    load_dotenv()
-    TWITTER_BEARER_TOKEN=os.getenv(BEARER_TOKEN)
+def make_authentication_header(TWITTER_BEARER_TOKEN):
 
+    # TWITTER_BEARER_TOKEN = None
     headers = {"Authorization": f"Bearer {TWITTER_BEARER_TOKEN}"}
+    print(headers)
+    assert len(str(headers)) > 30
 
     return headers
 
@@ -39,37 +40,28 @@ def make_fields_param_string(fields):
 @task(name="call-api")
 def make_api_call(headers, username_param, fields_param='&user.fields=public_metrics'):
     base_url = 'https://api.twitter.com/2/users/'
+    print(base_url + username_param + fields_param)
     response = requests.request(
         "GET", 
         base_url + username_param + fields_param, 
         headers=headers
         )
 
+    assert str(response.status_code).startswith('2')
+    print(response.json())
     return response
 
 
 @flow(name="Get User Data from Twitter API",
       version=os.getenv("GIT_COMMIT_SHA"))
-def data_output(BEARER_TOKEN, users, fields):
+def data_output(TWITTER_BEARER_TOKEN, users, fields):
 
-    headers = make_authentication_header(BEARER_TOKEN)
+    headers = make_authentication_header(TWITTER_BEARER_TOKEN)
+    print("HERE")
+    print(headers)
     user_string = make_user_param_string(users)
     field_string = make_fields_param_string(fields)
     response = make_api_call(headers, user_string, field_string)
-    return response.result().json()
-
-if __name__ == '__main__':
-
-    # Input data
-    users = [
-        'apacheairflow', 
-        'astronomerio'
-        ]
-    fields = 'public_metrics'
-
-    r = data_output(BEARER_TOKEN='TWITTER_BEARER_TOKEN', users=users, fields=fields)
-
-    print(r.result())
-    print('Done!')
-
+    print(response.result().json())
+    return response
 
