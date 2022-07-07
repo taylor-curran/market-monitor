@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import requests
 import pandas as pd
 from prefect import flow, task
+import time
+import random
 
 @task(name="make-auth-header")
 def make_authentication_header(TWITTER_BEARER_TOKEN):
@@ -12,13 +14,24 @@ def make_authentication_header(TWITTER_BEARER_TOKEN):
     # TWITTER_BEARER_TOKEN = None
     headers = {"Authorization": f"Bearer {TWITTER_BEARER_TOKEN}"}
     print(headers)
-    assert len(str(headers)) > 30
+    assert len(str(headers)) > 56
 
     return headers
 
-@task(name="make-user-param-string")
-def make_user_param_string(users):
+@task(name='Sleeping Task')
+def sleeping_flow():
+    time.sleep(3)
+    outcome = random.choice(['Pass', 'Pass', 'Pass'])
+    print("Random Outcome")
+    print(outcome)
+    assert outcome == 'Pass'
+    return "Hi!"
 
+
+@task(name="make-user-param-string")
+def make_user_param_string(users, hi):
+
+    print(hi)
     if type(users) != str:
         users_url_string = ','.join(users)
         username_param = f'by?usernames={users_url_string}' 
@@ -46,11 +59,16 @@ def make_api_call(headers, username_param, fields_param='&user.fields=public_met
         base_url + username_param + fields_param, 
         headers=headers
         )
+    try:
+        assert str(response.status_code).startswith('2')
+        print(response.json())
+    except:
+        print(response.text)
 
     assert str(response.status_code).startswith('2')
-    print(response.json())
     return response
 
+from prefect.task_runners import SequentialTaskRunner
 
 @flow(name="Get User Data from Twitter API",
       version=os.getenv("GIT_COMMIT_SHA"))
@@ -59,9 +77,9 @@ def data_output(TWITTER_BEARER_TOKEN, users, fields):
     headers = make_authentication_header(TWITTER_BEARER_TOKEN)
     print("HERE")
     print(headers)
-    user_string = make_user_param_string(users)
+    hi = sleeping_flow()
+    user_string = make_user_param_string(users, hi)
     field_string = make_fields_param_string(fields)
     response = make_api_call(headers, user_string, field_string)
-    print(response.result().json())
     return response
 
