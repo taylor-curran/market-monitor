@@ -7,23 +7,27 @@ import pandas as pd
 from prefect import flow, task
 import time
 import random
+from prefect import flow, get_run_logger
+
 
 @task(name="make-auth-header")
 def make_authentication_header(TWITTER_BEARER_TOKEN):
 
-    # TWITTER_BEARER_TOKEN = None
     headers = {"Authorization": f"Bearer {TWITTER_BEARER_TOKEN}"}
     print(headers)
     assert len(str(headers)) > 56
 
     return headers
 
-@task(name='Sleeping Task')
+@task(name="say-hello")
+def say_hello():
+    return 'Hello!'
+
+@flow(name='Sleeping Sub-Flow')
 def sleeping_flow():
+    hello_future = say_hello()
     time.sleep(3)
     outcome = random.choice(['Pass', 'Pass', 'Pass'])
-    print("Random Outcome")
-    print(outcome)
     assert outcome == 'Pass'
     return "Hi!"
 
@@ -59,27 +63,35 @@ def make_api_call(headers, username_param, fields_param='&user.fields=public_met
         base_url + username_param + fields_param, 
         headers=headers
         )
+    logger = get_run_logger()
+    
     try:
         assert str(response.status_code).startswith('2')
-        print(response.json())
+        print("INFO Good Response")
+
     except:
-        print(response.text)
+        print(f"INFO Bad Response = {response.text}")
 
     assert str(response.status_code).startswith('2')
     return response
-
-from prefect.task_runners import SequentialTaskRunner
 
 @flow(name="Get User Data from Twitter API",
       version=os.getenv("GIT_COMMIT_SHA"))
 def data_output(TWITTER_BEARER_TOKEN, users, fields):
 
+    logger = get_run_logger()
+
     headers = make_authentication_header(TWITTER_BEARER_TOKEN)
-    print("HERE")
-    print(headers)
+
     hi = sleeping_flow()
     user_string = make_user_param_string(users, hi)
+
+    logger.info(f"INFO User String {user_string}")
     field_string = make_fields_param_string(fields)
+    logger.info(f"INFO Field String {field_string}")
     response = make_api_call(headers, user_string, field_string)
+    logger.info("INFO Flow Return Value Below")
+    logger.info(f"INFO Twitter User Info: {response.result().json()}")
+
     return response
 
